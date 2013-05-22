@@ -1,5 +1,8 @@
 package com.example.slidingpuzzle;
 
+import java.util.Arrays;
+import java.util.Random;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -46,6 +49,8 @@ public class ImageAdapter extends BaseAdapter {
         tileImages[gridSize*gridSize - 1] = Bitmap.createScaledBitmap(blankTile, tileWidth, tileHeight, false);
         BLANK_TILE_ID = gridSize*gridSize - 1;
         tileOrder[gridSize*gridSize - 1] = BLANK_TILE_ID;
+        
+        
     }
 
     public int getCount() {
@@ -82,5 +87,23 @@ public class ImageAdapter extends BaseAdapter {
     public void setTileOrder(int[] newOrder) {
     	tileOrder = newOrder;
     	this.notifyDataSetChanged();
+    }
+
+    public void randomizeTileOrder(int numTiles) {
+    	
+    	Random randomGenerator = new Random();
+    	int randomInt, temp;
+    	
+    	int[] randomizedOrder = this.tileOrder;
+    	
+    	for (int i = 0; i < randomizedOrder.length; i++) {
+    		randomInt = randomGenerator.nextInt(numTiles);
+    		
+    		temp = randomizedOrder[i];
+    		randomizedOrder[i] = randomizedOrder[randomInt];
+    		randomizedOrder[randomInt] = temp;
+    	}
+    	
+    	this.tileOrder = randomizedOrder;
     }
 }

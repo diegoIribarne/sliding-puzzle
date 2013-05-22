@@ -21,7 +21,7 @@ import android.widget.LinearLayout;
 
 public class PuzzleActivity extends Activity   {
 	
-	private int GRID_SIZE = 4;
+	private int GRID_SIZE = 3;
 	GridView imageGrid;
 	
 	@Override
@@ -32,10 +32,13 @@ public class PuzzleActivity extends Activity   {
 		
 		imageGrid = createGrid(GRID_SIZE);
 		
-		if (savedInstanceState != null) {
-			if (savedInstanceState.getIntArray("gridOrder") != null) {
-				((ImageAdapter) imageGrid.getAdapter()).setTileOrder(savedInstanceState.getIntArray("gridOrder"));
-			}
+		// if resuming previous game, load previous tile order
+		if (savedInstanceState != null && (savedInstanceState.getIntArray("gridOrder") != null)) {
+			((ImageAdapter) imageGrid.getAdapter()).setTileOrder(savedInstanceState.getIntArray("gridOrder"));
+		}
+		// if starting new game, randomize tile order
+		else {
+			((ImageAdapter) imageGrid.getAdapter()).randomizeTileOrder(GRID_SIZE*GRID_SIZE);
 		}
 		
 		LinearLayout gridLayout = (LinearLayout)this.findViewById(R.id.grid_layout);
