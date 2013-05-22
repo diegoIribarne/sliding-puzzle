@@ -1,4 +1,4 @@
-package com.example.npuzzle;
+package com.example.slidingpuzzle;
 
 import android.graphics.Bitmap;
 import android.os.Parcel;

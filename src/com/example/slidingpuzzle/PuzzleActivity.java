@@ -1,4 +1,4 @@
-package com.example.npuzzle;
+package com.example.slidingpuzzle;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
@@ -18,7 +18,6 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.GridView;
 import android.widget.LinearLayout;
-import android.widget.Toast;
 
 public class PuzzleActivity extends Activity   {
 	
@@ -168,7 +167,7 @@ public class PuzzleActivity extends Activity   {
 		    	int[] tileOrder = adapter.getTileOrder();
 		    	int blankTile = adapter.BLANK_TILE_ID;
 
-		    	Toast.makeText(view.getContext(), Integer.toString(tileOrder[position]), Toast.LENGTH_SHORT).show();
+		    	//Toast.makeText(view.getContext(), Integer.toString(tileOrder[position]), Toast.LENGTH_SHORT).show();
 		    	if (attemptMove(tileOrder, position, blankTile)) {
 		    		adapter.notifyDataSetChanged();
 		    	}
