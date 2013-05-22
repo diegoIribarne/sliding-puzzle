@@ -1,0 +1,8 @@
+<GridView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/image_grid"
+    android:horizontalSpacing="0dp"
+    android:verticalSpacing="0dp"
+    android:adjustViewBounds="true"
+    android:background="@android:color/black"
+    android:layout_margin="2dp" >
+</GridView>
