@@ -10,7 +10,6 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 public class ImageAdapter extends BaseAdapter {
 
@@ -91,40 +90,32 @@ public class ImageAdapter extends BaseAdapter {
     	this.notifyDataSetChanged();
     }
 
-    // shuffles tiles using Fisher–Yates shuffle
+    // shuffles tiles using Fisher–Yates shuffle algorithm
     public void randomizeTileOrder(int numTiles) {
     	
     	Random randomGenerator = new Random();
-    	int randomInt, temp;
+    	int randomInt;
     	
     	int[] randomizedOrder = this.tileOrder;
     	
     	for (int i = randomizedOrder.length - 1; i > 0; i--) {
     		randomInt = randomGenerator.nextInt(i);
-    		
-    		temp = randomizedOrder[i];
-    		randomizedOrder[i] = randomizedOrder[randomInt];
-    		randomizedOrder[randomInt] = temp;
+    		swapTiles(randomizedOrder, i, randomInt);
     	}
     	
     	if (!isSolvable(numTiles)) {
-	    	Toast.makeText(this.context, "Made puzzle solvable.", Toast.LENGTH_SHORT).show();
     		if (this.tileOrder[0] == this.BLANK_TILE_ID || this.tileOrder[1] == this.BLANK_TILE_ID) {
-    			temp = this.tileOrder[numTiles - 1];
-    			this.tileOrder[numTiles - 1] = this.tileOrder[numTiles - 2];
-    			this.tileOrder[numTiles - 2] = temp;
+    			swapTiles(this.tileOrder, numTiles - 2, numTiles - 1);
     		}
     		else {
-    			temp = this.tileOrder[0];
-    			this.tileOrder[0] = this.tileOrder[1];
-    			this.tileOrder[1] = temp;
+    			swapTiles(this.tileOrder, 0, 1);
     		}
     	}
     	
     	this.tileOrder = randomizedOrder;
     }
     
-    public boolean isSolvable(int numTiles) {
+    private boolean isSolvable(int numTiles) {
 		if (gridSize % 2 == 1) {
 			return (sumInversions(numTiles) % 2 == 0);
 		} 
@@ -134,7 +125,7 @@ public class ImageAdapter extends BaseAdapter {
 	}
 
     
-    public int sumInversions(int numTiles) {
+    private int sumInversions(int numTiles) {
     	int inversions = 0;
     	  
     	for (int i = 0; i < numTiles; i++) {
@@ -149,5 +140,11 @@ public class ImageAdapter extends BaseAdapter {
     	
     	return inversions;
 	}
+    
+    private void swapTiles(int[] tileArray, int tile1, int tile2) {
+    	int temp = tileArray[tile1];
+    	tileArray[tile1] = tileArray[tile2];
+    	tileArray[tile2] = temp;
+    }
 
 }

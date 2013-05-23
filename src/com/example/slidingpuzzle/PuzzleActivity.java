@@ -18,11 +18,13 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.GridView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class PuzzleActivity extends Activity   {
 	
 	private int GRID_SIZE = 4;
+	private int numberOfMoves = 0;
 	GridView imageGrid;
 	
 	@Override
@@ -33,14 +35,17 @@ public class PuzzleActivity extends Activity   {
 		
 		imageGrid = createGrid(GRID_SIZE);
 		
-		// if resuming previous game, load previous tile order
+		// if resuming previous game, load previous tile order and number of moves made
 		if (savedInstanceState != null && (savedInstanceState.getIntArray("gridOrder") != null)) {
 			((ImageAdapter) imageGrid.getAdapter()).setTileOrder(savedInstanceState.getIntArray("gridOrder"));
+			this.numberOfMoves = savedInstanceState.getInt("movesMade", 0);
 		}
 		// if starting new game, randomize tile order
 		else {
 			((ImageAdapter) imageGrid.getAdapter()).randomizeTileOrder(GRID_SIZE*GRID_SIZE);
 		}
+		
+		this.updateNumberOfMoves();
 		
 		LinearLayout gridLayout = (LinearLayout)this.findViewById(R.id.grid_layout);
 		gridLayout.addView(imageGrid);
@@ -51,6 +56,7 @@ public class PuzzleActivity extends Activity   {
 	protected void onSaveInstanceState(Bundle outState) {
 		if (imageGrid != null) {
 			outState.putIntArray("gridOrder", ((ImageAdapter) imageGrid.getAdapter()).getTileOrder());
+			outState.putInt("movesMade", this.numberOfMoves);
 		}
 		
 		super.onSaveInstanceState(outState);
@@ -122,7 +128,7 @@ public class PuzzleActivity extends Activity   {
 		
 		// set maximum puzzle image width and height
 		int maxImageWidth = screenWidth - 50;
-		int maxImageHeight = screenHeight - actionBarHeight - 50;
+		int maxImageHeight = screenHeight - actionBarHeight - 100;
 		
 		Bitmap image = BitmapFactory.decodeResource(this.getResources(), R.drawable.pic1);
 		
@@ -222,6 +228,9 @@ public class PuzzleActivity extends Activity   {
 			int temp = tileOrder[selectedTilePosition];
 			tileOrder[selectedTilePosition] = tileOrder[swapPosition];
 			tileOrder[swapPosition] = temp;
+			
+			this.numberOfMoves++;
+			updateNumberOfMoves();
 		}
 		
 		return blankTileFound;
@@ -230,7 +239,6 @@ public class PuzzleActivity extends Activity   {
 	public boolean puzzleSolved(int[] tileOrder) {
 	
 		int numTiles = tileOrder.length;
-		
 		for (int i = 0; i < numTiles; i++) {
 			if (i != tileOrder[i]) {
 				return false;
@@ -239,4 +247,10 @@ public class PuzzleActivity extends Activity   {
 		
 		return true;
 	}
+
+	private void updateNumberOfMoves() {
+		TextView textView = (TextView)this.findViewById(R.id.moves_display);
+		textView.setText("Moves made: " + this.numberOfMoves);
+	}
+	
 }
