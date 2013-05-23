@@ -18,10 +18,11 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.GridView;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 public class PuzzleActivity extends Activity   {
 	
-	private int GRID_SIZE = 3;
+	private int GRID_SIZE = 4;
 	GridView imageGrid;
 	
 	@Override
@@ -170,9 +171,12 @@ public class PuzzleActivity extends Activity   {
 		    	int[] tileOrder = adapter.getTileOrder();
 		    	int blankTile = adapter.BLANK_TILE_ID;
 
-		    	//Toast.makeText(view.getContext(), Integer.toString(tileOrder[position]), Toast.LENGTH_SHORT).show();
 		    	if (attemptMove(tileOrder, position, blankTile)) {
 		    		adapter.notifyDataSetChanged();
+		    	}
+		    	
+		    	if (puzzleSolved(tileOrder)) {
+			    	Toast.makeText(view.getContext(), "You win!", Toast.LENGTH_SHORT).show();
 		    	}
 		    }
 		});
@@ -221,5 +225,18 @@ public class PuzzleActivity extends Activity   {
 		}
 		
 		return blankTileFound;
+	}
+
+	public boolean puzzleSolved(int[] tileOrder) {
+	
+		int numTiles = tileOrder.length;
+		
+		for (int i = 0; i < numTiles; i++) {
+			if (i != tileOrder[i]) {
+				return false;
+			}
+		}
+		
+		return true;
 	}
 }

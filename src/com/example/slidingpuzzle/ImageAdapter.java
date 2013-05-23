@@ -1,6 +1,5 @@
 package com.example.slidingpuzzle;
 
-import java.util.Arrays;
 import java.util.Random;
 
 import android.content.Context;
@@ -11,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 public class ImageAdapter extends BaseAdapter {
 
@@ -21,11 +21,13 @@ public class ImageAdapter extends BaseAdapter {
 	private int[] tileOrder;
 	private int tileWidth;
 	private int tileHeight;
+	private int gridSize;
 
     public ImageAdapter(Context c, int gridSize, Bitmap image) {
         context = c;
         tileImages = new Bitmap[gridSize*gridSize];
         tileOrder = new int[gridSize*gridSize];
+        this.gridSize = gridSize;
         
         int x = 0;
         int y = 0;
@@ -89,6 +91,7 @@ public class ImageAdapter extends BaseAdapter {
     	this.notifyDataSetChanged();
     }
 
+    // shuffles tiles using Fisher–Yates shuffle
     public void randomizeTileOrder(int numTiles) {
     	
     	Random randomGenerator = new Random();
@@ -96,14 +99,55 @@ public class ImageAdapter extends BaseAdapter {
     	
     	int[] randomizedOrder = this.tileOrder;
     	
-    	for (int i = 0; i < randomizedOrder.length; i++) {
-    		randomInt = randomGenerator.nextInt(numTiles);
+    	for (int i = randomizedOrder.length - 1; i > 0; i--) {
+    		randomInt = randomGenerator.nextInt(i);
     		
     		temp = randomizedOrder[i];
     		randomizedOrder[i] = randomizedOrder[randomInt];
     		randomizedOrder[randomInt] = temp;
     	}
     	
+    	if (!isSolvable(numTiles)) {
+	    	Toast.makeText(this.context, "Made puzzle solvable.", Toast.LENGTH_SHORT).show();
+    		if (this.tileOrder[0] == this.BLANK_TILE_ID || this.tileOrder[1] == this.BLANK_TILE_ID) {
+    			temp = this.tileOrder[numTiles - 1];
+    			this.tileOrder[numTiles - 1] = this.tileOrder[numTiles - 2];
+    			this.tileOrder[numTiles - 2] = temp;
+    		}
+    		else {
+    			temp = this.tileOrder[0];
+    			this.tileOrder[0] = this.tileOrder[1];
+    			this.tileOrder[1] = temp;
+    		}
+    	}
+    	
     	this.tileOrder = randomizedOrder;
     }
+    
+    public boolean isSolvable(int numTiles) {
+		if (gridSize % 2 == 1) {
+			return (sumInversions(numTiles) % 2 == 0);
+		} 
+		else {
+			return ((sumInversions(numTiles) + this.gridSize - (this.BLANK_TILE_ID % this.gridSize) + 1) % 2 == 0);
+		}
+	}
+
+    
+    public int sumInversions(int numTiles) {
+    	int inversions = 0;
+    	  
+    	for (int i = 0; i < numTiles; i++) {
+    		if (this.tileOrder[i] != this.BLANK_TILE_ID) {
+    			for (int j = i; j < numTiles; j++) {
+        			if (this.tileOrder[i] > this.tileOrder[j]) {
+        				inversions++;
+        			}
+        		}
+    		}
+    	}
+    	
+    	return inversions;
+	}
+
 }
