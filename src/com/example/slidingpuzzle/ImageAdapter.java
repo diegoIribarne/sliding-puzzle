@@ -131,7 +131,7 @@ public class ImageAdapter extends BaseAdapter {
 			
 			int blankTileRow = blankTilePosition / this.gridSize;
 			
-			return ((totalInversions + this.gridSize - blankTileRow) % 2 == 0);
+			return ((totalInversions + this.gridSize - blankTileRow) % 2 == 1);
 		}
 	}
 
