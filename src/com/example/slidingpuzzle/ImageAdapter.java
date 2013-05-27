@@ -50,8 +50,6 @@ public class ImageAdapter extends BaseAdapter {
         tileImages[gridSize*gridSize - 1] = Bitmap.createScaledBitmap(blankTile, tileWidth, tileHeight, false);
         BLANK_TILE_ID = gridSize*gridSize - 1;
         tileOrder[gridSize*gridSize - 1] = BLANK_TILE_ID;
-        
-        
     }
 
     public int getCount() {
@@ -116,11 +114,24 @@ public class ImageAdapter extends BaseAdapter {
     }
     
     private boolean isSolvable(int numTiles) {
+    	
+		int totalInversions = sumInversions(numTiles);
+    	
 		if (gridSize % 2 == 1) {
-			return (sumInversions(numTiles) % 2 == 0);
+			return (totalInversions % 2 == 0);
 		} 
 		else {
-			return ((sumInversions(numTiles) + this.gridSize - (this.BLANK_TILE_ID % this.gridSize) + 1) % 2 == 0);
+			int blankTilePosition = -1;
+
+			for (int i = 0; blankTilePosition == -1; i++) {
+				if (this.tileOrder[i] == this.BLANK_TILE_ID) {
+					blankTilePosition = i;
+				}
+			}
+			
+			int blankTileRow = blankTilePosition / this.gridSize;
+			
+			return ((totalInversions + this.gridSize - blankTileRow) % 2 == 0);
 		}
 	}
 

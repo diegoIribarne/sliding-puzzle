@@ -130,7 +130,7 @@ public class PuzzleActivity extends Activity   {
 		int maxImageWidth = screenWidth - 50;
 		int maxImageHeight = screenHeight - actionBarHeight - 100;
 		
-		Bitmap image = BitmapFactory.decodeResource(this.getResources(), R.drawable.pic1);
+		Bitmap image = BitmapFactory.decodeResource(this.getResources(), R.drawable.pic2);
 		
 		int imageWidth = image.getWidth();
 		int imageHeight = image.getHeight();
