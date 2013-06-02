@@ -3,6 +3,11 @@ package com.example.slidingpuzzle;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Point;
@@ -18,14 +23,17 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.GridView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 public class PuzzleActivity extends Activity   {
 	
-	private int GRID_SIZE = 4;
+	public static final String PREFS_NAME = "Prefs";
+	private int GRID_SIZE;
 	private int numberOfMoves = 0;
 	GridView imageGrid;
+	int puzzleImageSource;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -33,22 +41,32 @@ public class PuzzleActivity extends Activity   {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_puzzle);
 		
-		imageGrid = createGrid(GRID_SIZE);
+		// Disable all animations
+		getWindow().setWindowAnimations(0);
+		
+		SharedPreferences prefs = getSharedPreferences(PREFS_NAME, 0);
+		
+	    GRID_SIZE = prefs.getInt("gridSize", 4);
+	       
+		// load image from intent
+		this.puzzleImageSource = getIntent().getIntExtra("image", 0);
+		
+		this.imageGrid = createGrid(GRID_SIZE);
+		LinearLayout gridLayout = (LinearLayout)this.findViewById(R.id.grid_layout);
 		
 		// if resuming previous game, load previous tile order and number of moves made
-		if (savedInstanceState != null && (savedInstanceState.getIntArray("gridOrder") != null)) {
-			((ImageAdapter) imageGrid.getAdapter()).setTileOrder(savedInstanceState.getIntArray("gridOrder"));
+		if (savedInstanceState != null && (savedInstanceState.getIntArray("gridOrder") != null) && !prefs.getBoolean("sizeChanged", false)) {
+			((ImageAdapter) this.imageGrid.getAdapter()).setTileOrder(savedInstanceState.getIntArray("gridOrder"));
 			this.numberOfMoves = savedInstanceState.getInt("movesMade", 0);
 		}
 		// if starting new game, randomize tile order
 		else {
-			((ImageAdapter) imageGrid.getAdapter()).randomizeTileOrder(GRID_SIZE*GRID_SIZE);
+			((ImageAdapter) this.imageGrid.getAdapter()).randomizeTileOrder(this.GRID_SIZE*this.GRID_SIZE);
 		}
 		
 		this.updateNumberOfMoves();
 		
-		LinearLayout gridLayout = (LinearLayout)this.findViewById(R.id.grid_layout);
-		gridLayout.addView(imageGrid);
+		gridLayout.addView(this.imageGrid);
 		
 	}
 	
@@ -83,18 +101,26 @@ public class PuzzleActivity extends Activity   {
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
-		case android.R.id.home:
-			// This ID represents the Home or Up button. In the case of this
-			// activity, the Up button is shown. Use NavUtils to allow users
-			// to navigate up one level in the application structure. For
-			// more details, see the Navigation pattern on Android Design:
-			//
-			// http://developer.android.com/design/patterns/navigation.html#up-vs-back
-			//
-			NavUtils.navigateUpFromSameTask(this);
-			return true;
-		}
-		return super.onOptionsItemSelected(item);
+			case android.R.id.home:
+				// This ID represents the Home or Up button. In the case of this
+				// activity, the Up button is shown. Use NavUtils to allow users
+				// to navigate up one level in the application structure. For
+				// more details, see the Navigation pattern on Android Design:
+				//
+				// http://developer.android.com/design/patterns/navigation.html#up-vs-back
+				//
+				NavUtils.navigateUpFromSameTask(this);
+				overridePendingTransition(0, 0);
+				return true;
+	        case R.id.action_difficulty:
+	        	openDifficultyDialog();
+	            return true;
+	        case R.id.action_new_game:
+	        	newGame();
+	        	return true;
+	        default:
+	            return super.onOptionsItemSelected(item);
+	    }
 	}
 	
 	@SuppressWarnings("deprecation")
@@ -127,13 +153,17 @@ public class PuzzleActivity extends Activity   {
 		}
 		
 		// set maximum puzzle image width and height
-		int maxImageWidth = screenWidth - 50;
-		int maxImageHeight = screenHeight - actionBarHeight - 100;
+		int maxImageWidth = screenWidth - 10;
+		int maxImageHeight = screenHeight - actionBarHeight - 90;
+		/*
+		if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+			maxImageHeight -= 70;
+		}
+		*/
 		
-		Bitmap image = BitmapFactory.decodeResource(this.getResources(), R.drawable.pic2);
-		
-		int imageWidth = image.getWidth();
-		int imageHeight = image.getHeight();
+		Bitmap puzzleImage = BitmapFactory.decodeResource(this.getResources(), this.puzzleImageSource);
+		int imageWidth = puzzleImage.getWidth();
+		int imageHeight = puzzleImage.getHeight();
 		
 		float maxImageRatio = (float)maxImageWidth/maxImageHeight; 
 		float imageRatio = (float)imageWidth/imageHeight;
@@ -159,16 +189,16 @@ public class PuzzleActivity extends Activity   {
 		
 		imageWidth -= imageWidth % gridSize;
 		imageHeight -= imageHeight % gridSize;
-		
-		image = Bitmap.createScaledBitmap(image, imageWidth, imageHeight, false);
+
+		puzzleImage = Bitmap.createScaledBitmap(puzzleImage, imageWidth, imageHeight, false);
 
 		GridView grid = new GridView(this);
-		grid.setLayoutParams(new GridView.LayoutParams(image.getWidth(), image.getHeight()));
+		grid.setLayoutParams(new GridView.LayoutParams(imageWidth, imageHeight));
 		
 		grid.setNumColumns(gridSize);
 		grid.setColumnWidth(imageWidth/gridSize);
 		
-		grid.setAdapter(new ImageAdapter(this, gridSize, image));
+		grid.setAdapter(new ImageAdapter(this, gridSize, puzzleImage));
 				
 		grid.setOnItemClickListener(new OnItemClickListener() {
 		    @Override
@@ -253,4 +283,52 @@ public class PuzzleActivity extends Activity   {
 		textView.setText("Moves made: " + this.numberOfMoves);
 	}
 	
+	public void openDifficultyDialog() {
+		SharedPreferences settings = getSharedPreferences(PuzzleActivity.PREFS_NAME, 0);
+ 	   	 	   	
+ 	   	AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+ 	   	dialog.setTitle("Select Difficulty: ");
+ 	   	dialog.setSingleChoiceItems(R.array.difficulty_array, settings.getInt("gridSize", 2) - 3, new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {}
+		});
+ 	   	dialog.setPositiveButton("Save", new OnClickListener() {
+ 	   		public void onClick(DialogInterface dialog, int which) {
+ 	          //here you can add functions
+ 	   			ListView lw = ((AlertDialog)dialog).getListView();
+ 	   			int checkedItem = lw.getCheckedItemPosition();
+
+ 	   			changeDifficulty(checkedItem+3);
+ 	   		} 
+ 	   	});
+ 	   dialog.setNegativeButton("Cancel", new OnClickListener() {
+	   		public void onClick(DialogInterface dialog, int which) {
+	   			dialog.dismiss();
+	   		} 
+	   	});
+ 	   
+ 	   dialog.show();
+
+	}
+	
+	public void changeDifficulty(int newGridSize) {
+		SharedPreferences settings = getSharedPreferences(PuzzleActivity.PREFS_NAME, 0);
+		SharedPreferences.Editor editor = settings.edit();
+	 	editor.putInt("gridSize", newGridSize);
+	 	editor.commit();
+	 	   	
+	 	if (settings.getInt("gridSize", 0) != this.GRID_SIZE) {
+	 		newGame();
+	 	}
+	}
+
+	private void newGame() {
+		Intent intent = new Intent(this, PuzzleActivity.class);
+ 	   	intent.putExtra("sizeChanged", true);
+		intent.putExtra("image", this.puzzleImageSource);
+		//intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+ 	   	startActivity(intent);
+ 	   	this.finish();
+ 	   	//overridePendingTransition(0, 0);
+	}
 }

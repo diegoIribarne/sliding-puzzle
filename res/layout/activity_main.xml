@@ -1,15 +1,31 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/root_layout"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical" >
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_gravity="center" >
     
     <Button
-        android:id="@+id/start_button"
-        android:onClick="startPuzzle"
-        android:text="Start"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:id="@+id/use_included_image_button"
+        android:onClick="selectIncludedImage"
+        android:text="Select included image"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp" />
+    <Button
+        android:id="@+id/use_gallery_image_button"
+        android:onClick="selectFromGallery"
+        android:text="Select from gallery"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp" />
+    <Button
+        android:id="@+id/use_camera_image_button"
+        android:onClick="useCamera"
+        android:text="Take picture with camera"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp" />
 
 </LinearLayout>

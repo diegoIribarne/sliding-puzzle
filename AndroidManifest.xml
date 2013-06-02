@@ -5,7 +5,7 @@
     android:versionName="1.0" >
 
     <uses-sdk
-        android:minSdkVersion="8"
+        android:minSdkVersion="11"
         android:targetSdkVersion="17" />
 
     <application
@@ -30,6 +30,14 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.slidingpuzzle.MainActivity" />
         </activity>
+        <activity
+            android:name="com.example.slidingpuzzle.SelectIncludedImageActivity"
+            android:label="@string/title_activity_select_included_image"
+            android:parentActivityName="com.example.slidingpuzzle.MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.slidingpuzzle.MainActivity" />
+        </activity>
     </application>
-
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 </manifest>
