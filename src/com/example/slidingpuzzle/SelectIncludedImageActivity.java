@@ -59,10 +59,10 @@ public class SelectIncludedImageActivity extends Activity {
 		
 		switch(v.getId()) {
 		case R.id.pic1Button:
-			intent.putExtra("image", R.drawable.pic1);
+			intent.putExtra("image", Integer.valueOf(R.drawable.pic1));
 			break;
 		case R.id.pic2Button:
-			intent.putExtra("image", R.drawable.pic2);
+			intent.putExtra("image", Integer.valueOf(R.drawable.pic2));
 			break;
 		}
 

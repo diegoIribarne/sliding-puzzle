@@ -111,6 +111,7 @@ public class ImageAdapter extends BaseAdapter {
     	}
     	
     	this.tileOrder = randomizedOrder;
+    	this.notifyDataSetChanged();
     }
     
     private boolean isSolvable(int numTiles) {

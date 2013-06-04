@@ -15,7 +15,8 @@ public class MainActivity extends Activity {
 	
 	private static final int CAMERA_REQUEST_CODE = 1000;
 	private static final int GALLERY_REQUEST_CODE = 2000;
-	public Uri mCapturedImageURI;
+	private final String CAMERA_FILE_NAME = "camera_file";
+	private Uri mCapturedImageURI;
 		
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -54,39 +55,58 @@ public class MainActivity extends Activity {
 	}
 	
 	public void useCamera(View v) {
+		
         ContentValues values = new ContentValues();  
-        values.put(MediaStore.Images.Media.TITLE, "temp.jpg");  
-        this.mCapturedImageURI = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);  
-
+        values.put(MediaStore.Images.Media.TITLE, CAMERA_FILE_NAME);  
+        this.mCapturedImageURI = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+        
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);  
         intent.putExtra(MediaStore.EXTRA_OUTPUT, this.mCapturedImageURI);  
         startActivityForResult(intent, CAMERA_REQUEST_CODE); 
+        
 	}
 	
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) 
 	{
 	    super.onActivityResult(requestCode, resultCode, data); 
 
-	    if (resultCode == RESULT_OK) {
-	    	Uri selectedImage = null;
-		    
-	    	switch(requestCode) { 
-		    case GALLERY_REQUEST_CODE:
-		        selectedImage = data.getData();
-		        break;
-		    case CAMERA_REQUEST_CODE:
-		    	selectedImage = this.mCapturedImageURI;
-		    	break;
-		    };
-		    
-		    String[] filePathColumn = {MediaStore.Images.Media.DATA};
-	
-	        Cursor cursor = getContentResolver().query(selectedImage, filePathColumn, null, null, null);
-	        cursor.moveToFirst();
-	
-	        int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-	        String filePath = cursor.getString(columnIndex);
-	        cursor.close();
+	    String imageFilePath = null;
+	    
+    	switch(requestCode) { 
+	    case GALLERY_REQUEST_CODE:
+	    	if (resultCode == RESULT_OK) {
+	    		imageFilePath = getFilePath(data.getData());
+	    	}
+	        break;
+	    case CAMERA_REQUEST_CODE:
+	    	if (resultCode == RESULT_CANCELED) {
+	            getContentResolver().delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "TITLE = '" + CAMERA_FILE_NAME + "'", null);
+	    	}
+	    	else if (resultCode == RESULT_OK) {
+	    		imageFilePath = getFilePath(this.mCapturedImageURI);
+	    	}
+	    	break;
+	    };
+	    
+	    if (imageFilePath != null) {
+	    	// start puzzle activity using image at imageFilePath
+	    	Intent intent = new Intent(this, PuzzleActivity.class);
+			intent.putExtra("image", imageFilePath);
+
+			startActivity(intent);
 	    }
+	}
+	
+	private String getFilePath(Uri selectedImage) {
+		String[] filePathColumn = {MediaStore.Images.Media.DATA};
+		
+        Cursor cursor = getContentResolver().query(selectedImage, filePathColumn, null, null, null);
+        cursor.moveToFirst();
+
+        int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+        String filePath = cursor.getString(columnIndex);
+        cursor.close();
+        
+        return filePath;
 	}
 }

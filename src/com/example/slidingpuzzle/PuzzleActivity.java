@@ -1,5 +1,7 @@
 package com.example.slidingpuzzle;
 
+import java.io.IOException;
+
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -9,10 +11,12 @@ import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.graphics.Point;
+import android.media.ExifInterface;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.NavUtils;
 import android.util.TypedValue;
 import android.view.Display;
@@ -32,8 +36,9 @@ public class PuzzleActivity extends Activity   {
 	public static final String PREFS_NAME = "Prefs";
 	private int GRID_SIZE;
 	private int numberOfMoves = 0;
-	GridView imageGrid;
-	int puzzleImageSource;
+	private GridView imageGrid;
+	private Object puzzleImageSource;
+	private boolean solved = false;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -44,37 +49,80 @@ public class PuzzleActivity extends Activity   {
 		// Disable all animations
 		getWindow().setWindowAnimations(0);
 		
+		// Get grid size/difficulty, default 4x4
 		SharedPreferences prefs = getSharedPreferences(PREFS_NAME, 0);
-		
 	    GRID_SIZE = prefs.getInt("gridSize", 4);
 	       
-		// load image from intent
-		this.puzzleImageSource = getIntent().getIntExtra("image", 0);
+		// get image ID/path from intent
+		Integer imageID = getIntent().getIntExtra("image", 0);
+		String imagePath = getIntent().getStringExtra("image");
+		if (imageID != 0) {
+			this.puzzleImageSource = imageID;
+		}
+		else {
+			this.puzzleImageSource = imagePath;
+		}
 		
-		this.imageGrid = createGrid(GRID_SIZE);
+		try {
+			this.imageGrid = createGrid();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		LinearLayout gridLayout = (LinearLayout)this.findViewById(R.id.grid_layout);
 		
 		// if resuming previous game, load previous tile order and number of moves made
-		if (savedInstanceState != null && (savedInstanceState.getIntArray("gridOrder") != null) && !prefs.getBoolean("sizeChanged", false)) {
+		if (savedInstanceState != null && (savedInstanceState.getIntArray("gridOrder") != null) && !prefs.getBoolean("startNewGame", false)) {
 			((ImageAdapter) this.imageGrid.getAdapter()).setTileOrder(savedInstanceState.getIntArray("gridOrder"));
 			this.numberOfMoves = savedInstanceState.getInt("movesMade", 0);
+			this.solved = savedInstanceState.getBoolean("solved", false);
+			gridLayout.addView(this.imageGrid);
 		}
 		// if starting new game, randomize tile order
 		else {
-			((ImageAdapter) this.imageGrid.getAdapter()).randomizeTileOrder(this.GRID_SIZE*this.GRID_SIZE);
+			gridLayout.addView(this.imageGrid);
+	        countdownAndRandomizePuzzle(3);
 		}
 		
 		this.updateNumberOfMoves();
-		
-		gridLayout.addView(this.imageGrid);
-		
+				
+	}
+	
+	private void countdownAndRandomizePuzzle (final int seconds) {
+		if (seconds > 0) {
+	        displayCountdownToast(Integer.toString(seconds));
+	        
+			Handler mHandler = new Handler();
+			mHandler.postDelayed(new Runnable() {
+	            public void run() {
+	            	countdownAndRandomizePuzzle(seconds-1);
+	            }
+	        }, 1000);
+		}
+		else {
+			((ImageAdapter) this.imageGrid.getAdapter()).randomizeTileOrder(this.GRID_SIZE*this.GRID_SIZE);
+		}
+	}
+	
+	// displays toast then cancels after .5 seconds
+	private void displayCountdownToast (String text) {
+		final Toast toast = Toast.makeText(this, text, Toast.LENGTH_SHORT);
+		toast.show();
+
+	    Handler handler = new Handler();
+	        handler.postDelayed(new Runnable() {
+	           @Override
+	           public void run() {
+	               toast.cancel(); 
+	           }
+	    }, 500);
 	}
 	
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		if (imageGrid != null) {
-			outState.putIntArray("gridOrder", ((ImageAdapter) imageGrid.getAdapter()).getTileOrder());
+			outState.putIntArray("gridOrder", ((ImageAdapter) this.imageGrid.getAdapter()).getTileOrder());
 			outState.putInt("movesMade", this.numberOfMoves);
+			outState.putBoolean("solved", this.solved);
 		}
 		
 		super.onSaveInstanceState(outState);
@@ -123,82 +171,21 @@ public class PuzzleActivity extends Activity   {
 	    }
 	}
 	
-	@SuppressWarnings("deprecation")
-	@SuppressLint("NewApi")
-	private GridView createGrid(int gridSize) {
-		// get screen width and height
-		Display display = getWindowManager().getDefaultDisplay();
+	private GridView createGrid() throws IOException {
+		Bitmap puzzleImage = null;
 		
-		int screenWidth;
-		int screenHeight;
-		int actionBarHeight = 0;
-		
-		// Calculate ActionBar height
-		TypedValue tv = new TypedValue();
-		if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true))
-		{
-		    actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data,getResources().getDisplayMetrics());
-		}
-		
-		// get width and height of screen
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-			Point size = new Point();
-			display.getSize(size);
-			screenWidth = size.x;
-			screenHeight = size.y;
-		}
-		else {
-			screenWidth = display.getWidth();
-			screenHeight = display.getHeight();
-		}
-		
-		// set maximum puzzle image width and height
-		int maxImageWidth = screenWidth - 10;
-		int maxImageHeight = screenHeight - actionBarHeight - 90;
-		/*
-		if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-			maxImageHeight -= 70;
-		}
-		*/
-		
-		Bitmap puzzleImage = BitmapFactory.decodeResource(this.getResources(), this.puzzleImageSource);
+		puzzleImage = loadScaledImage();
 		int imageWidth = puzzleImage.getWidth();
 		int imageHeight = puzzleImage.getHeight();
 		
-		float maxImageRatio = (float)maxImageWidth/maxImageHeight; 
-		float imageRatio = (float)imageWidth/imageHeight;
-		
-		if (imageWidth > maxImageWidth || imageHeight > maxImageHeight) {
-			int newWidth;
-			int newHeight;
-			
-			if (imageRatio > maxImageRatio) {
-				// scale based on image width
-				newWidth = maxImageWidth;
-				newHeight = (int) ((float)maxImageWidth/imageWidth*imageHeight);
-			}
-			else {
-				// scale based on image height
-				newHeight = maxImageHeight;
-				newWidth = (int) ((float)maxImageHeight/imageHeight*imageWidth);
-			}
-			
-			imageWidth = newWidth;
-			imageHeight = newHeight;
-		}
-		
-		imageWidth -= imageWidth % gridSize;
-		imageHeight -= imageHeight % gridSize;
-
-		puzzleImage = Bitmap.createScaledBitmap(puzzleImage, imageWidth, imageHeight, false);
-
 		GridView grid = new GridView(this);
 		grid.setLayoutParams(new GridView.LayoutParams(imageWidth, imageHeight));
 		
-		grid.setNumColumns(gridSize);
-		grid.setColumnWidth(imageWidth/gridSize);
+		grid.setNumColumns(this.GRID_SIZE);
+		grid.setColumnWidth(imageWidth/this.GRID_SIZE);
 		
-		grid.setAdapter(new ImageAdapter(this, gridSize, puzzleImage));
+		grid.setAdapter(new ImageAdapter(this, this.GRID_SIZE, puzzleImage));
+		puzzleImage.recycle();
 				
 		grid.setOnItemClickListener(new OnItemClickListener() {
 		    @Override
@@ -211,13 +198,108 @@ public class PuzzleActivity extends Activity   {
 		    		adapter.notifyDataSetChanged();
 		    	}
 		    	
-		    	if (puzzleSolved(tileOrder)) {
-			    	Toast.makeText(view.getContext(), "You win!", Toast.LENGTH_SHORT).show();
-		    	}
+		    	checkPuzzleSolved(tileOrder);
 		    }
 		});
 				
 		return grid;
+	}
+	
+	@SuppressWarnings("deprecation")
+	@SuppressLint("NewApi")
+	private Bitmap loadScaledImage () throws IOException {
+		// get screen width and height
+		Display display = getWindowManager().getDefaultDisplay();
+
+		int screenWidth;
+		int screenHeight;
+		int actionBarHeight = 0;
+
+		// Calculate ActionBar height
+		TypedValue tv = new TypedValue();
+		if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true))
+		{
+			actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data, getResources().getDisplayMetrics()) + 80;
+		}
+
+		// get width and height of screen
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+			Point size = new Point();
+			display.getSize(size);
+			screenWidth = size.x;
+			screenHeight = size.y;
+		}
+		else {
+			screenWidth = display.getWidth();
+			screenHeight = display.getHeight();
+		}
+
+		// set maximum puzzle image width and height
+		int maxImageWidth = screenWidth - 10;
+		int maxImageHeight = screenHeight - actionBarHeight - 10;
+		
+		// load scaled down version of bitmap
+		Bitmap sampleImage = null;
+		if (this.puzzleImageSource instanceof Integer) {
+			sampleImage = ImageLoader.decodeSampledBitmap(getResources(), 
+					(Integer) this.puzzleImageSource, maxImageWidth, maxImageHeight);
+		}
+		else if (this.puzzleImageSource instanceof String) {
+			sampleImage = ImageLoader.decodeSampledBitmap((String) this.puzzleImageSource, 
+					maxImageWidth, maxImageHeight);
+
+			int angle = getRotationAngle();
+	        if (angle != 0) {
+		        Matrix mat = new Matrix();
+		        mat.postRotate(angle);
+		        sampleImage = Bitmap.createBitmap(sampleImage, 0, 0, sampleImage.getWidth(), sampleImage.getHeight(), mat, true);
+	        }
+		}
+		else {
+			this.finish();
+		}
+		
+		int imageWidth = sampleImage.getWidth();
+		int imageHeight = sampleImage.getHeight();
+
+		float maxImageRatio = (float)maxImageWidth/maxImageHeight; 
+		float imageRatio = (float)imageWidth/imageHeight;
+
+		if (imageWidth > maxImageWidth || imageHeight > maxImageHeight) {
+			int newWidth;
+			int newHeight;
+
+			if (imageRatio > maxImageRatio) {
+				// scale based on image width
+				newWidth = maxImageWidth;
+				newHeight = (int) ((float)maxImageWidth/imageWidth*imageHeight);
+			}
+			else {
+				// scale based on image height
+				newHeight = maxImageHeight;
+				newWidth = (int) ((float)maxImageHeight/imageHeight*imageWidth);
+			}
+
+			imageWidth = newWidth;
+			imageHeight = newHeight;
+		}
+
+		imageWidth -= imageWidth % this.GRID_SIZE;
+		imageHeight -= imageHeight % this.GRID_SIZE;
+		
+		return Bitmap.createScaledBitmap(sampleImage, imageWidth, imageHeight, false);
+	}
+	
+	private int getRotationAngle() throws IOException {
+		ExifInterface exif = new ExifInterface((String) this.puzzleImageSource);
+		int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+		
+		int angle = 0;
+		if (orientation == ExifInterface.ORIENTATION_ROTATE_90) { angle = 90; } 
+		else if (orientation == ExifInterface.ORIENTATION_ROTATE_180) { angle = 180; } 
+		else if (orientation == ExifInterface.ORIENTATION_ROTATE_270) { angle = 270; }
+		
+		return angle;
 	}
 	
 	public boolean attemptMove(int[] tileOrder, int selectedTilePosition, int blankTile) {
@@ -259,21 +341,28 @@ public class PuzzleActivity extends Activity   {
 			tileOrder[selectedTilePosition] = tileOrder[swapPosition];
 			tileOrder[swapPosition] = temp;
 			
-			this.numberOfMoves++;
-			updateNumberOfMoves();
+			if (!this.solved) {
+				this.numberOfMoves++;
+				updateNumberOfMoves();
+			}
 		}
 		
 		return blankTileFound;
 	}
 
-	public boolean puzzleSolved(int[] tileOrder) {
+	public boolean checkPuzzleSolved(int[] tileOrder) {
 	
+		if (this.solved) { return true; }
+		
 		int numTiles = tileOrder.length;
 		for (int i = 0; i < numTiles; i++) {
 			if (i != tileOrder[i]) {
 				return false;
 			}
 		}
+		
+		Toast.makeText(this, "You win!", Toast.LENGTH_SHORT).show();
+		this.solved = true;
 		
 		return true;
 	}
@@ -324,11 +413,17 @@ public class PuzzleActivity extends Activity   {
 
 	private void newGame() {
 		Intent intent = new Intent(this, PuzzleActivity.class);
- 	   	intent.putExtra("sizeChanged", true);
-		intent.putExtra("image", this.puzzleImageSource);
-		//intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
- 	   	startActivity(intent);
+ 	   	intent.putExtra("startNewGame", true);
+		
+ 	   	if (this.puzzleImageSource instanceof Integer) {
+ 	   		intent.putExtra("image", (Integer) this.puzzleImageSource);
+ 	   	}
+ 	   	else if (this.puzzleImageSource instanceof String) {
+ 	   		intent.putExtra("image", (String) this.puzzleImageSource);
+ 	   	}
+ 	   	
+		startActivity(intent);
+		this.imageGrid = null;
  	   	this.finish();
- 	   	//overridePendingTransition(0, 0);
 	}
 }

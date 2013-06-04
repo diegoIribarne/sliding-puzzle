@@ -31,16 +31,15 @@ public final class R {
         public static final int pic2=0x7f020004;
     }
     public static final class id {
-        public static final int action_difficulty=0x7f09000a;
-        public static final int action_exit=0x7f090009;
-        public static final int action_new_game=0x7f09000b;
-        public static final int grid_layout=0x7f090004;
-        public static final int image_grid=0x7f090008;
-        public static final int moves_display=0x7f090005;
-        public static final int pic1Button=0x7f090006;
-        public static final int pic2Button=0x7f090007;
+        public static final int action_difficulty=0x7f090009;
+        public static final int action_exit=0x7f090008;
+        public static final int action_new_game=0x7f09000a;
+        public static final int grid_layout=0x7f090003;
+        public static final int image_grid=0x7f090007;
+        public static final int moves_display=0x7f090004;
+        public static final int pic1Button=0x7f090005;
+        public static final int pic2Button=0x7f090006;
         public static final int root_layout=0x7f090000;
-        public static final int use_camera_image_button=0x7f090003;
         public static final int use_gallery_image_button=0x7f090002;
         public static final int use_included_image_button=0x7f090001;
     }
