@@ -1,26 +1,81 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/root_layout"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:orientation="vertical"
     android:layout_gravity="center" >
     
     <Button
-        android:id="@+id/use_included_image_button"
-        android:onClick="selectIncludedImage"
-        android:text="Select included image"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="10dp" />
-    <Button
         android:id="@+id/use_gallery_image_button"
         android:onClick="selectFromGallery"
-        android:text="Select from gallery"
-        android:layout_width="match_parent"
+        android:text="@string/select_from_gallery"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="10dp" />
+        android:layout_marginTop="40dp"
+        android:layout_marginBottom="40dp"
+        android:layout_gravity="center" />
+	   
+    <TextView 
+        android:text="@string/select_included_image"
+        android:textSize="18sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="7dp" />
+    <HorizontalScrollView 
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:orientation="horizontal" >
+        <Button 
+            android:id="@+id/city_Button"
+            android:text="@string/city"
+            android:drawableBottom="@drawable/city_small"
+            android:onClick="startPuzzleWithIncludedImage"
+            android:background="?android:attr/selectableItemBackground"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:gravity="center_horizontal"
+	        android:layout_marginRight="10dp"
+	        />
+		<Button
+	        android:id="@+id/clouds_Button"
+	        android:text="@string/clouds"
+	        android:drawableBottom="@drawable/clouds_small"
+	        android:onClick="startPuzzleWithIncludedImage"
+	        android:background="?android:attr/selectableItemBackground"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:gravity="center_horizontal"
+	        android:layout_marginRight="10dp" />
+	    <Button
+	        android:id="@+id/grid_Button"
+	        android:text="@string/grid"
+	        android:drawableBottom="@drawable/grid_small"
+	        android:onClick="startPuzzleWithIncludedImage"
+	        android:background="?android:attr/selectableItemBackground"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:gravity="center_horizontal"
+	        android:layout_marginRight="10dp" />
+	    <Button
+	        android:id="@+id/tree_Button"
+	        android:text="@string/tree"
+	        android:drawableBottom="@drawable/tree_small"
+	        android:onClick="startPuzzleWithIncludedImage"
+	        android:background="?android:attr/selectableItemBackground"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:gravity="center_horizontal" />
+    </LinearLayout>
+    </HorizontalScrollView>
+	    	        
     <!--
+    Camera button
     <Button
         android:id="@+id/use_camera_image_button"
         android:onClick="useCamera"
